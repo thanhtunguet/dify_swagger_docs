@@ -1,0 +1,378 @@
+openapi: 3.0.3
+info:
+  title: Dify API
+  version: 1.0.0
+  description: API documentation for Dify AI application backend.
+
+servers:
+  - url: http://dify.example.vn/v1
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChatMessageRequest:
+      type: object
+      required: [query, user]
+      properties:
+        query:
+          type: string
+        inputs:
+          type: object
+          additionalProperties: true
+        response_mode:
+          type: string
+          enum: [streaming, blocking]
+        user:
+          type: string
+        conversation_id:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/DifyFile"
+        auto_generate_name:
+          type: boolean
+          default: true
+
+    DifyFile:
+      type: object
+      required: [type, transfer_method]
+      properties:
+        type:
+          type: string
+        transfer_method:
+          type: string
+          enum: [remote_url, local_file]
+        url:
+          type: string
+        upload_file_id:
+          type: string
+
+    ChatMessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+        conversation_id:
+          type: string
+        mode:
+          type: string
+        answer:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        created_at:
+          type: integer
+
+    RetrieverResource:
+      type: object
+      properties:
+        dataset_id:
+          type: string
+        dataset_name:
+          type: string
+        document_id:
+          type: string
+        document_name:
+          type: string
+        segment_id:
+          type: string
+        score:
+          type: number
+          format: float
+        content:
+          type: string
+
+    Usage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+        completion_tokens:
+          type: integer
+        total_tokens:
+          type: integer
+        currency:
+          type: string
+        total_price:
+          type: string
+
+    Metadata:
+      type: object
+      properties:
+        usage:
+          $ref: "#/components/schemas/Usage"
+        retriever_resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/RetrieverResource"
+
+paths:
+  /chat-messages:
+    post:
+      summary: Send a chat message
+      operationId: sendChatMessage
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageRequest"
+      responses:
+        "200":
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageResponse"
+
+  /files/upload:
+    post:
+      summary: Upload a file
+      operationId: uploadFile
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, user]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                user:
+                  type: string
+      responses:
+        "200":
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+
+  /chat-messages/{task_id}/stop:
+    post:
+      summary: Stop chat message generation
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stopped successfully
+
+  /messages/{message_id}/feedbacks:
+    post:
+      summary: Submit feedback
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: message_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Feedback recorded
+
+  /messages/{message_id}/suggested:
+    get:
+      summary: Get suggested replies
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: message_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /messages:
+    get:
+      summary: List messages
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /conversations:
+    get:
+      summary: List conversations
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /conversations/{conversation_id}:
+    delete:
+      summary: Delete conversation
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: conversation_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted successfully
+
+  /conversations/{conversation_id}/name:
+    post:
+      summary: Rename conversation
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: conversation_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                auto_generate:
+                  type: boolean
+      responses:
+        "200":
+          description: Name updated
+
+  /audio-to-text:
+    post:
+      summary: Convert audio to text
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Transcription result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+
+  /text-to-audio:
+    post:
+      summary: Convert text to audio
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        "200":
+          description: Audio URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  audio_url:
+                    type: string
+
+  /info:
+    get:
+      summary: Get API info
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Info map
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /parameters:
+    get:
+      summary: Get parameters
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Params map
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /meta:
+    get:
+      summary: Get metadata
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Metadata map
+          content:
+            application/json:
+              schema:
+                type: object
