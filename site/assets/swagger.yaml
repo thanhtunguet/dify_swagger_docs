@@ -1,11 +1,26 @@
 openapi: 3.0.3
+swagger: 2.0
 info:
   title: Dify API
   version: 1.0.0
   description: API documentation for Dify AI application backend.
 
 servers:
-  - url: http://dify.example.vn/v1
+  - url: https://{host}:{port}/{basePath}
+    description: Customizable server
+    variables:
+      host:
+        default: api.dify.ai
+        description: API host (no protocol)
+      port:
+        enum:
+          - "80"
+          - "443"
+        default: "443"
+      basePath:
+        default: "v1"
+        enum:
+          - "v1"
 
 components:
   securitySchemes:
@@ -190,11 +205,19 @@ paths:
           schema:
             type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
-              additionalProperties: true
+              properties:
+                rating:
+                  type: string
+                  enum: [like, dislike]
+                user:
+                  type: string
+                content:
+                  type: string
       responses:
         "200":
           description: Feedback recorded
@@ -207,6 +230,11 @@ paths:
       parameters:
         - in: path
           name: message_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: user
           required: true
           schema:
             type: string
@@ -225,6 +253,33 @@ paths:
       summary: List messages
       security:
         - ApiKeyAuth: []
+      parameters:
+        - name: user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: conversation_id
+          in: query
+          schema:
+            type: string
+        - name: last_id
+          in: query
+          schema:
+            type: string
+        - name: first_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, -created_at, updated_at, -updated_at]
       responses:
         "200":
           description: List of messages
@@ -240,6 +295,20 @@ paths:
       summary: List conversations
       security:
         - ApiKeyAuth: []
+      parameters:
+        - name: user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: sort_by
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: List of conversations
@@ -282,6 +351,8 @@ paths:
             schema:
               type: object
               properties:
+                name:
+                  type: string
                 auto_generate:
                   type: boolean
       responses:

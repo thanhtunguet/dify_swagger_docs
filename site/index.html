@@ -37,15 +37,14 @@
 
     <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <script>
-        let ui;
-
+        var ui;
         function loadUI(serverUrl) {
             ui = SwaggerUIBundle({
                 url: '/assets/swagger.yaml',
                 dom_id: '#swagger-ui',
                 presets: [
                     SwaggerUIBundle.presets.apis,
-                    SwaggerUIBundle.SwaggerUIStandalonePreset,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
                 ],
                 layout: 'BaseLayout',
                 validatorUrl: null,
@@ -54,13 +53,8 @@
 
         function updateServer() {
             const serverUrl = document.getElementById('server-url').value;
-            const servers = document.getElementById('servers');
-            servers.innerHTML = '';
-            const option = document.createElement('option');
-            option.value = serverUrl;
-            option.text = serverUrl;
-            servers.appendChild(option);
-            servers.value = serverUrl;
+            ui.getConfigs().spec.servers = [{ url: serverUrl }];
+            ui.specActions.updateSpec(ui.getConfigs().spec);
         }
 
         window.onload = () => {
