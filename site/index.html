@@ -28,11 +28,6 @@
 </head>
 
 <body>
-    <div id="server-url-bar">
-        <label for="server-url">Server URL: </label>
-        <input type="text" class="form-control" id="server-url" placeholder="https://api.example.com/v1" size="50" />
-        <button class="btn btn-primary my-2" onclick="updateServer()">Add Server</button>
-    </div>
     <div id="swagger-ui"></div>
 
     <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
@@ -50,13 +45,6 @@
                 validatorUrl: null,
             });
         }
-
-        function updateServer() {
-            const serverUrl = document.getElementById('server-url').value;
-            ui.getConfigs().spec.servers = [{ url: serverUrl }];
-            ui.specActions.updateSpec(ui.getConfigs().spec);
-        }
-
         window.onload = () => {
             loadUI();
         };
