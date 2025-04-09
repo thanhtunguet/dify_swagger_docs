@@ -13,26 +13,61 @@
             height: 100%;
         }
 
+        #server-url-bar {
+            padding: 10px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+
         #swagger-ui {
-            height: 100vh;
+            height: calc(100vh - 50px);
         }
     </style>
 </head>
 
 <body>
+    <div id="server-url-bar">
+        <label for="server-url">Server URL: </label>
+        <input type="text" id="server-url" placeholder="https://api.example.com/v1" size="50" />
+        <button onclick="updateServer()">Set Server</button>
+    </div>
     <div id="swagger-ui"></div>
+
     <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <script>
-        window.onload = () => {
-            SwaggerUIBundle({
+        let ui;
+
+        function loadUI(serverUrl) {
+            ui = SwaggerUIBundle({
                 url: '/assets/swagger.yaml',
                 dom_id: '#swagger-ui',
                 presets: [
                     SwaggerUIBundle.presets.apis,
                     SwaggerUIBundle.SwaggerUIStandalonePreset
                 ],
-                layout: 'BaseLayout'
+                layout: 'BaseLayout',
+                validatorUrl: null,
+                onComplete: function () {
+                    if (serverUrl) {
+                        ui.specActions.updateJsonSpec(
+                            JSON.stringify({
+                                ...ui.getState().toJS().spec,
+                                servers: [{ url: serverUrl }]
+                            })
+                        );
+                    }
+                }
             });
+        }
+
+        function updateServer() {
+            const serverUrl = document.getElementById('server-url').value;
+            document.getElementById('swagger-ui').innerHTML = '';
+            loadUI(serverUrl);
+        }
+
+        window.onload = () => {
+            loadUI();
         };
     </script>
 </body>
